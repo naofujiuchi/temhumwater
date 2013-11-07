@@ -4,7 +4,8 @@
 
 #include "DHT.h"
 
-#define DHTPIN A0     // what pin we're connected to
+#define LEVELPIN A0
+#define DHTPIN A2     // what pin we're connected to
 
 // Uncomment whatever type you're using!
 //#define DHTTYPE DHT11   // DHT 11 
@@ -18,28 +19,35 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
-int outPin_1=12;
-int outPin_2=13;
-int sensorValue = 0;
+int outPin_0 = 10;
+int outPin_1 = 11;
+int outPin_2 = 12;
+int outPin_3 = 13;
+int levelval = 0;
 int level;
-int inByte;
+int inByteL;
+int inByteR;
+int highlowL;
+int highlowR;
 
 void setup() {
   Serial.begin(9600); 
   //ピンモード設定
-  pinMode(outPin_1,OUTPUT);
-  pinMode(outPin_2,OUTPUT);
+  pinMode(outPin_0, OUTPUT);
+  pinMode(outPin_1, OUTPUT);
+  pinMode(outPin_2, OUTPUT);
+  pinMode(outPin_3, OUTPUT);
   dht.begin();
 }
 
 void loop() {
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
-
+  float hum = dht.readHumidity();
+  float tem = dht.readTemperature();
+  levelval = analogRead(LEVELPIN);
   // check if returns are valid, if they are NaN (not a number) then something went wrong!
-  if (isnan(t) || isnan(h)) {
+  if (isnan(tem) || isnan(hum)) {
     Serial.println("Failed to read from DHT");
     delay(10000);
   } else {
@@ -52,58 +60,62 @@ void loop() {
     Serial.println(" *C");
     delay(10000);
 */
-
-    //湿度60%以上のとき
-    if(h>=90){
-      level=0;
+    if(levelval > 0){
+      level = 1;
+    }else{
+      level = 0;
     }
-    //湿度60%未満のとき
-    else{
-      level=1;
-    }
-    //シリアルbufferにデータが1個あるとき
-    if(Serial.available()==1){
-      //processingからの信号をinByteに代入
-      inByte=Serial.read();
-      //bufferクリア
+    //シリアルbufferにデータが2個あるとき
+    if(Serial.available() == 2){
+      inByteL = Serial.read();
+      inByteR = Serial.read();
       Serial.flush();
-      //outPinにprocessingからの制御を書く
-      //Initialのシグナル
-      if(inByte==3){
-        digitalWrite(outPin_1,HIGH);
-        digitalWrite(outPin_2,HIGH);      
-        Serial.write(level);
-        Serial.write(inByte);
-        Serial.write(h);
-        Serial.write(t);
-      }
-      //Stopのシグナル
-      else if(inByte==0){
-        digitalWrite(outPin_1,LOW);
-        digitalWrite(outPin_2,LOW);
-        Serial.write(level);
-        Serial.write(inByte);      
-        Serial.write(h);
-        Serial.write(t);
-      }
-      //RunningのときにLOWのシグナル
-      else if(inByte==1){
-        digitalWrite(outPin_1,LOW);
-        digitalWrite(outPin_2,LOW);      
-        Serial.write(level);
-        Serial.write(inByte);
-        Serial.write(h);
-        Serial.write(t);
-      }
-      //RunningのときにHIGHのシグナル
-      else if(inByte==2){
-        digitalWrite(outPin_1,HIGH);
-        digitalWrite(outPin_2,HIGH);
-        Serial.write(level);
-        Serial.write(inByte); 
-        Serial.write(h);
-        Serial.write(t);
-      }   
+      inByteLeft(inByteL);
+      inByteRight(inByteR);
+      digitalWrite(outPin_0, highlowL);
+      digitalWrite(outPin_1, highlowL);
+      digitalWrite(outPin_2, highlowR);
+      digitalWrite(outPin_3, highlowR);      
+      // Serial write
+      Serial.write(inByteL);
+      Serial.write(inByteR);
+      Serial.write(level);
+      Serial.write(hum);
+      Serial.write(tem);
     }
+  }
+}
+
+void inByteLeft(int _inByteL){
+  switch(_inByteL){
+    case 0:
+      highlowL = HIGH;
+      break;
+    case 1:
+      highlowL = LOW;
+      break;    
+    case 2:
+      highlowL = LOW;
+      break;    
+    case 3:
+      highlowL = HIGH;
+      break;    
+  }
+}
+
+void inByteRight(int _inByteR){
+  switch(_inByteR){
+    case 0:
+      highlowR = HIGH;
+      break;
+    case 1:
+      highlowR = LOW;
+      break;    
+    case 2:
+      highlowR = LOW;
+      break;    
+    case 3:
+      highlowR = HIGH;
+      break;    
   }
 }

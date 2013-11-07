@@ -1,123 +1,194 @@
 //フォント使用
 PFont font;
+// Initialize image class
+PImage imgA;
+PImage imgB;
+PImage imgC;
+PImage imgD;
+PImage imgL;
+PImage imgR;
+boolean flag;
 //シリアルライブラリの取り込み
 import processing.serial.*;
 //シリアルクラスのインスタンス
 Serial myPort;
 //変数宣言
-float level;
-float time;
-float zerotime;
-float temptime;
-float temp;
+int press;
+int pressL;
+int pressR;
+String stateL = "Stop";
+String stateR = "Stop";
+String onoffL;
+String onoffR;
+int level;
+int inByteL;
+int inByteR;
 float hum;
-int inByte;
+float temp;
+int outL;
+int outR;
 int s;
 int m;
 int h;
-int d;
-int press;
-String state="Stop";
-String onoff;
-
+String t;
+  
 void setup(){
-  size(100, 100);
+  size(500, 400);
   frameRate(1);
   font = loadFont("Calibri-24.vlw");
   textFont(font);
   textAlign(RIGHT);
-  //シリアルポートの設定
-  myPort=new Serial(this,"COM7",9600);
-  //シリアルbufferの大きさ指定
-  myPort.buffer(2);
+  myPort=new Serial(this, "/dev/cu.usbmodem1411", 9600);
+  myPort.buffer(5);
+  imgA = loadImage("playgreen.png");
+  imgB = loadImage("pausegreen.png");
+  imgC = loadImage("playorange.png");
+  imgD = loadImage("pauseorange.png");
+  flag = false;
 }
 
 void draw(){
-  background(inByte);
-  //press回数が2の倍数のとき
-/*
-  if(press%2==0){
-    time=temptime;
-  }
-  //それ以外のとき
-  else if(press%2==1){
-    time=temptime+millis()-zerotime;
-  }
-  //日・時・分・秒計算
-  d=int(time/86400000);
-  h=int((time%86400000)/3600000);
-  m=int((time%3600000)/60000);
-  s=int((time%60000)/1000);
-*/
-  h=int(hour());
-  m=int(minute());
-  s=int(second());
-  //時間表示
-  String t = h + ":" + nf(m, 2) + ":" + nf(s, 2);
-  //稼働時間指定
-  if((h!=7)||(m>=10)){
-    onoff="OnTime";
-  }else{
-    onoff="OffTime";
-  }
-  //ウィンドウにテキスト表示
-  text(state,85,15);
-  text(t, 85, 30);  
-  text(hum, 85, 45);
-  text(temp, 85, 60);
-  text(onoff,85,75);
-  text(inByte,55,90);
-  //シリアルbufferにデータが2個あるとき
-  if(myPort.available()==4){
-    //Arduinoからのデータを読み込む
-    level = myPort.read();
-    inByte=myPort.read();
-    hum=myPort.read();
-    temp=myPort.read();
-    //bufferクリア
+  background(100);
+  getTime();
+  onoffL = onoffTimeLeft(h, m);
+  onoffR = onoffTimeRight(h, m);
+  //シリアルbufferにデータが5個あるとき
+  if(myPort.available() == 5){
+    readData();
     myPort.clear();
-    //条件分岐で異なるシグナルをArduinoに送る
-   if(((state=="Running")&&(level==1)&&(onoff=="OnTime"))||(inByte==3)){
-      myPort.write(2);
-    }else if(((state=="Running")&&(level==1)&&(onoff=="OnTime"))&&(inByte==0)){
-      myPort.write(2);
-    }else if((state=="Running")&&(level==1)&&(onoff=="OnTime")){
-      myPort.write(1);
-    }else{
-      myPort.write(0);
-    }
+    outL = outputLeft(inByteL, level, stateL, onoffL);
+    outR = outputRight(inByteR, hum, stateR, onoffR);
+    myPort.write(outL);
+    myPort.write(outR);
+  }
+  getPicture(stateL, stateR);
+  display(t, level, hum, temp,  stateL, stateR, onoffL, onoffR, inByteL, inByteR);
+}
+
+void getPicture(String _stateL, String _stateR){
+  if(_stateL == "Stop"){
+    imgL = imgA;
+  }else{
+    imgL = imgB;
+  }
+  if(_stateR == "Stop"){
+    imgR = imgC;
+  }else{
+    imgR = imgD;
+  }
+  image(imgL, 0, 140);
+  image(imgR, 250, 140);
+}
+
+void getTime(){
+  h = int(hour());
+  m = int(minute());
+  s = int(second());
+  t = h + ":" + nf(m, 2) + ":" + nf(s, 2);
+}
+
+String onoffTimeLeft(int _h, int _m){
+  if((_h == 15) && (_m < 20)){
+    return "OnTime";
+  }else{
+    return "OffTime";
+  }
+}  
+
+String onoffTimeRight(int _h, int _m){
+//  if((_h == 15) && (_m < 20)){
+    return "OnTime";
+//  }else{
+//    return "OffTime";
+//  }
+}  
+
+void display(String _t, int _level, float _hum, float _temp, String _stateL, String _stateR, String _onoffL, String _onoffR, int _inByteL, int _inByteR){
+  text("Autowater", 180, 20);
+  text("Humidifier", 430, 20);
+  text(_t, 295, 20);
+  text("level", 275, 50);
+  text(_level, 135, 50);
+  text("humidity", 295, 70);
+  text(_hum, 410, 70);
+  text("temperature", 315, 90);
+  text(_temp, 410, 90);
+  text("state", 275, 110);
+  text(_stateL, 160, 110);
+  text(_stateR, 410, 110);
+  text("onoffTime", 300, 130);
+  text(_onoffL, 160, 130);
+  text(_onoffR, 410, 130);
+  text("inByte", 280, 150);
+  text(_inByteL, 135, 150);
+  text(_inByteR, 390, 150);
+}
+
+void readData(){
+  inByteL = myPort.read();
+  inByteR = myPort.read();
+  level = myPort.read();
+  hum = myPort.read();
+  temp = myPort.read();
+}
+
+int outputLeft(int _inByteL, int _level, String _stateL, String _onoffL){
+  if(((_stateL == "Running") && (_level == 1) && (_onoffL == "OnTime")) || (_inByteL == 0)){
+    return 3;
+  }else if(((_stateL == "Running") && (_level == 1) && (_onoffL == "OnTime")) && (_inByteL == 1)){
+    return 3;
+  }else if((_stateL == "Running") && (_level == 1) && (_onoffL == "OnTime")){
+    return 2;
+  }else{
+    return 0;
   }
 }
 
-void countPress(){
-  press++;
-  //ウィンドウクリック初回時は
-  if(press==1){
-    //Initialシグナル
-    myPort.write(3);
-    zerotime=millis();
-    //Running状態
-    state="Running";
+int outputRight(int _inByteR, float _hum, String _stateR, String _onoffR){
+  if(((_stateR == "Running") && (_hum >= 90) && (_onoffR == "OnTime")) || (_inByteR == 0)){
+    return 3;
+  }else if(((_stateR == "Running") && (_hum >= 90) && (_onoffR == "OnTime")) && (_inByteR == 1)){
+    return 3;
+  }else if((_stateR == "Running") && (_hum >= 90) && (_onoffR == "OnTime")){
+    return 2;
+  }else{
+    return 0;
   }
-  //それ以外で奇数回時はInitialシグナルなしで
-  else if(press%2==1){
-    zerotime=millis();
-    //Running状態
-    state="Running";
+}
+
+void countPressLeft(){
+  pressL++;
+  if(pressL % 2 == 1){
+    stateL = "Running";
   }
-  //偶数回時は
-  else if(press%2==0){
-    temptime=time;
-    //Stop状態
-    state="Stop";
+  else if(pressL % 2 == 0){
+    stateL = "Stop";
+  }
+}
+
+void countPressRight(){
+  pressR++;
+  if(pressR % 2 == 1){
+    stateR = "Running";
+  }
+  else if(pressR % 2 == 0){
+    stateR = "Stop";
   }
 }
 
 //ProcessingをRunしたときに出てくるウィンドウをクリックすると
 void mousePressed(){
-  //bufferクリア
-  myPort.clear();
-  //countPressファンクションに飛ぶ
-  countPress();
+  press++;
+  if(press == 1){
+    myPort.clear();
+    myPort.write(3);
+    myPort.write(3);
+  }
+  if(mouseX >= 40 && mouseX <= 220 && mouseY >= 180 && mouseY <= 360){
+    countPressLeft();
+  }
+  if(mouseX >= 290 && mouseX <= 470 && mouseY >= 180 && mouseY <= 360){
+    countPressRight();
+  }
 }
 

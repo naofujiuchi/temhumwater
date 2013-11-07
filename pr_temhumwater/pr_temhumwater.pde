@@ -88,11 +88,11 @@ void getTime(){
 }
 
 String onoffTimeLeft(int _h, int _m){
-  if((_h == 15) && (_m < 20)){
+//  if((_h == 15) && (_m < 20)){
     return "OnTime";
-  }else{
-    return "OffTime";
-  }
+//  }else{
+//    return "OffTime";
+//  }
 }  
 
 String onoffTimeRight(int _h, int _m){
@@ -133,26 +133,22 @@ void readData(){
 }
 
 int outputLeft(int _inByteL, int _level, String _stateL, String _onoffL){
-  if(((_stateL == "Running") && (_level == 1) && (_onoffL == "OnTime")) || (_inByteL == 0)){
+  if((_stateL == "Running") && (_level == 0) && (_onoffL == "OnTime")){
     return 3;
-  }else if(((_stateL == "Running") && (_level == 1) && (_onoffL == "OnTime")) && (_inByteL == 1)){
-    return 3;
-  }else if((_stateL == "Running") && (_level == 1) && (_onoffL == "OnTime")){
-    return 2;
+  }else if(_inByteL == 0){
+    return 1;
   }else{
-    return 0;
+    return 1;
   }
 }
 
 int outputRight(int _inByteR, float _hum, String _stateR, String _onoffR){
-  if(((_stateR == "Running") && (_hum >= 90) && (_onoffR == "OnTime")) || (_inByteR == 0)){
+  if((_stateR == "Running") && (_hum < 90) && (_onoffR == "OnTime")){
     return 3;
-  }else if(((_stateR == "Running") && (_hum >= 90) && (_onoffR == "OnTime")) && (_inByteR == 1)){
-    return 3;
-  }else if((_stateR == "Running") && (_hum >= 90) && (_onoffR == "OnTime")){
-    return 2;
+  }else if(_inByteR == 0){
+    return 1;
   }else{
-    return 0;
+    return 1;
   }
 }
 
@@ -181,8 +177,8 @@ void mousePressed(){
   press++;
   if(press == 1){
     myPort.clear();
-    myPort.write(3);
-    myPort.write(3);
+    myPort.write(0);
+    myPort.write(0);
   }
   if(mouseX >= 40 && mouseX <= 220 && mouseY >= 180 && mouseY <= 360){
     countPressLeft();

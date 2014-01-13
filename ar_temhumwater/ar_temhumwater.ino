@@ -4,8 +4,9 @@
 
 #include "DHT.h"
 
-#define LEVELPIN A0
-#define DHTPIN A2     // what pin we're connected to
+#define LEVELPIN1 A0
+#define DHTPIN A2     // what pin we're connected to humidity sensor
+#define LEVELPIN2 A4
 
 // Uncomment whatever type you're using!
 //#define DHTTYPE DHT11   // DHT 11 
@@ -23,12 +24,18 @@ int outPin_0 = 10;
 int outPin_1 = 11;
 int outPin_2 = 12;
 int outPin_3 = 13;
-int levelval = 0;
-int level;
-int inByteL;
-int inByteR;
-int highlowL;
-int highlowR;
+int outPin_4 = 14;
+int outPin_5 = 15;
+int levelval1 = 0;
+int levelval2 = 0;
+int level1;
+int level2;
+int inByte1;
+int inByte2;
+int inByte3;
+int highlow1;
+int highlow2;
+int highlow3;
 
 void setup() {
   Serial.begin(9600); 
@@ -37,6 +44,8 @@ void setup() {
   pinMode(outPin_1, OUTPUT);
   pinMode(outPin_2, OUTPUT);
   pinMode(outPin_3, OUTPUT);
+  pinMode(outPin_4, OUTPUT);
+  pinMode(outPin_5, OUTPUT);
   dht.begin();
 }
 
@@ -45,7 +54,8 @@ void loop() {
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   float hum = dht.readHumidity();
   float tem = dht.readTemperature();
-  levelval = analogRead(LEVELPIN);
+  levelval1 = analogRead(LEVELPIN1);
+  levelval2 = analogRead(LEVELPIN2);
   // check if returns are valid, if they are NaN (not a number) then something went wrong!
   if (isnan(tem) || isnan(hum)) {
     Serial.println("Failed to read from DHT");
@@ -60,62 +70,55 @@ void loop() {
     Serial.println(" *C");
     delay(10000);
 */
-    if(levelval > 0){
-      level = 1;
+    if(levelval1 > 0){
+      level1 = 1;
     }else{
-      level = 0;
+      level1 = 0;
     }
-    //シリアルbufferにデータが2個あるとき
-    if(Serial.available() == 2){
-      inByteL = Serial.read();
-      inByteR = Serial.read();
+    if(levelval2 > 0){
+    		 level2 = 1;
+		 }else{
+		 level2 = 0
+    } 
+    //シリアルbufferにデータが3個あるとき
+    if(Serial.available() == 3){
+      inByte1 = Serial.read();
+      inByte2 = Serial.read();
+      inByte3 = Serial.read();
       Serial.flush();
-      inByteLeft(inByteL);
-      inByteRight(inByteR);
-      digitalWrite(outPin_0, highlowL);
-      digitalWrite(outPin_1, highlowL);
-      digitalWrite(outPin_2, highlowR);
-      digitalWrite(outPin_3, highlowR);      
+      highlow1 = highlow(inByte1);
+      highlow2 = highlow(inByte2);
+      highlow3 = highlow(inByte3);
+      digitalWrite(outPin_0, highlow1);
+      digitalWrite(outPin_1, highlow1);
+      digitalWrite(outPin_2, highlow2);
+      digitalWrite(outPin_3, highlow2);
+      digitalWrite(outPin_4, highlow3);
+      digitalWrite(outPin_5, highlow3);
       // Serial write
-      Serial.write(inByteL);
-      Serial.write(inByteR);
-      Serial.write(level);
+      Serial.write(inByte1);
+      Serial.write(inByte2);
+      Serial.write(level1);
+      Serial.write(level2);
       Serial.write(hum);
       Serial.write(tem);
     }
   }
 }
 
-void inByteLeft(int _inByteL){
-  switch(_inByteL){
+void highlow(int _inByte){
+  switch(_inByte){
     case 0:
-      highlowL = HIGH;
+      return HIGH;
       break;
     case 1:
-      highlowL = LOW;
-      break;    
-    case 2:
-      highlowL = LOW;
-      break;    
-    case 3:
-      highlowL = HIGH;
-      break;    
-  }
-}
-
-void inByteRight(int _inByteR){
-  switch(_inByteR){
-    case 0:
-      highlowR = HIGH;
+      return LOW;
       break;
-    case 1:
-      highlowR = LOW;
-      break;    
     case 2:
-      highlowR = LOW;
-      break;    
+      return LOW;
+      break;
     case 3:
-      highlowR = HIGH;
-      break;    
+      return = HIGH;
+      break;
   }
 }

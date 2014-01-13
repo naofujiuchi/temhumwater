@@ -98,6 +98,7 @@ void loop() {
       // Serial write
       Serial.write(inByte1);
       Serial.write(inByte2);
+      Serial.write(inByte3);
       Serial.write(level1);
       Serial.write(level2);
       Serial.write(hum);

@@ -43,7 +43,7 @@ void setup() {
 
 void loop(){
   // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  // Sensor readings may also be up to 2 s  econds 'old' (its a very slow sensor)
   float hum = dht.readHumidity();  // !!Unless connecting to DHT sensor, errors would arise!!
   float tem = dht.readTemperature();
   // check if returns are valid, if they are NaN (not a number) then something went wrong!

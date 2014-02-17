@@ -143,16 +143,16 @@ int outLevel(int _inByte, int _level, String _state, String _onoff) {
 
 int outLevel2(int _inByte, int _level, String _state, String _onoff) {
   int _outLevel;
-  if ((_state == "Running") && (_level == 0) && (_onoff == "OnTime") && (workingtime[3] < 300)) {  // when water level decreased and comes to 5 cm
+  if ((_state == "Running") && (_level == 0) && (_onoff == "OnTime") && (workingtime[3] < 120)) {  // when water level decreased and comes to 5 cm
     workingtime[3]++;
     _outLevel = 3;
-  }else if ((_state == "Running") && (_level == 1) && (_onoff == "OnTime") && (workingtime[3] < 300) && (workingtime[3] > 0)) {  // when water level is 5 - 10 cm, and later level increase
+  }else if ((_state == "Running") && (_level == 1) && (_onoff == "OnTime") && (workingtime[3] < 120) && (workingtime[3] > 0)) {  // when water level is 5 - 10 cm, and later level increase
     workingtime[3]++;
     _outLevel = 2;
   } else if (_inByte == 0) {  // initial
     workingtime[3] = 0;
     _outLevel = 1;
-  } else if (workingtime[3] >= 300){  // 4 means alert
+  } else if (workingtime[3] >= 120){  // 4 means alert
     _outLevel = 4;
   }else if (_inByte == 4){  // keep alert
     _outLevel = 4;

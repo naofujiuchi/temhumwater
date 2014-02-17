@@ -94,7 +94,7 @@ void readSerial() {
 String onoffTime(int _i, int _h, int _m) {
   switch(_i) {
     case 1:
-      if ((_h == 15) && (_m < 20)) {
+      if ((_h == 5) && (_m < 20)) {
         return "OnTime";
       }else{
         return "OffTime";

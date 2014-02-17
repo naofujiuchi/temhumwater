@@ -16,6 +16,7 @@ int h;
 float hum;
 float temp;
 String t;
+int[] workingtime = new int[4];
 int[] press = new int[4];
 int[] level = new int[4];
 int[] inByte = new int[4];
@@ -38,6 +39,7 @@ void setup() {
   imgB = loadImage("pausegreen.png");
   flag = false;
   for (i = 1; i <= 3; i++) {
+    workingtime[i] = 0;
     press[i] = 0;
     level[i] = 0;
     inByte[i] = 0;
@@ -78,7 +80,7 @@ void readSerial() {
   int i;
   for(i = 1; i <= 7; i++){
     serial[i] = myPort.read();
-    println(i + ": " + serial[i]);
+//    println(i + ": " + serial[i]);
   }
   inByte[1] = serial[1];
   inByte[2] = serial[2];
@@ -111,11 +113,13 @@ int getOut(int _i) {
   int _out;
   switch(_i){
     case 1:
-    case 3:
       _out = outLevel(inByte[_i], level[_i], state[_i], onoff[_i]);
       break;
     case 2:
       _out = outHum(inByte[_i], hum, state[_i], onoff[_i]);
+      break;
+    case 3:
+      _out = outLevel2(inByte[_i], level[_i], state[_i], onoff[_i]);
       break;
     default:
       println("Error in getout");
@@ -135,6 +139,29 @@ int outLevel(int _inByte, int _level, String _state, String _onoff) {
   else {
     return 1;
   }
+}
+
+int outLevel2(int _inByte, int _level, String _state, String _onoff) {
+  int _outLevel;
+  if ((_state == "Running") && (_level == 0) && (_onoff == "OnTime") && (workingtime[3] < 300)) {  // when water level decreased and comes to 5 cm
+    workingtime[3]++;
+    _outLevel = 3;
+  }else if ((_state == "Running") && (_level == 1) && (_onoff == "OnTime") && (workingtime[3] < 300) && (workingtime[3] > 0)) {  // when water level is 5 - 10 cm, and later level increase
+    workingtime[3]++;
+    _outLevel = 2;
+  } else if (_inByte == 0) {  // initial
+    workingtime[3] = 0;
+    _outLevel = 1;
+  } else if (workingtime[3] >= 300){  // 4 means alert
+    _outLevel = 4;
+  }else if (_inByte == 4){  // keep alert
+    _outLevel = 4;
+  } else {  // when water level is up 10 cm, and later level decrease
+    workingtime[3] = 0;
+    _outLevel = 1;
+  }
+  println(workingtime[3]);
+  return _outLevel;
 }
 
 int outHum(int _inByte, float _hum, String _state, String _onoff) {

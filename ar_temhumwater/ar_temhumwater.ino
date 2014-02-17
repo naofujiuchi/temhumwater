@@ -44,13 +44,13 @@ void setup() {
 void loop(){
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 s  econds 'old' (its a very slow sensor)
-  float hum = dht.readHumidity();  // !!Unless connecting to DHT sensor, errors would arise!!
-  float tem = dht.readTemperature();
+//  float hum = dht.readHumidity();  // !!Unless connecting to DHT sensor, errors would arise!!
+//  float tem = dht.readTemperature();
   // check if returns are valid, if they are NaN (not a number) then something went wrong!
 //  checkDHT(tem, hum);
   for(int i = 1; i <= 3; i++){
     levelval[i] = getLevelval(i);
-    level[i] = getLevel(levelval[i]);
+    level[i] = getLevel(i, levelval[i]);
   }
   if(Serial.available() == 3){
     for(int i = 1; i <= 3; i++){
@@ -84,9 +84,11 @@ int getHighlow(int _inByte){
     case 1:
       return LOW;
     case 2:
-      return LOW;
+      return HIGH;
     case 3:
       return HIGH;
+    case 4:
+      return LOW;
     default:
       return LOW;
   }
@@ -115,10 +117,23 @@ void checkDHT(float _tem, float _hum){
   }
 }
 */
-int getLevel(int _levelval){
-  if(_levelval > 0){
-    return 1;
-  }else{
-    return 0;
+int getLevel(int _i, int _levelval){
+  switch(_i){
+    case 1:
+      if(_levelval > 500){
+        return 1;
+      }else{
+        return 0;
+      }
+    case 3:  // fluid level sensor (eTape, MILONE Technologies); if level is 5 cm then output 400, and level is 10 cm then output 450 when connected input voltage 5 V and 1 kΩ resistance
+      if(_levelval <= 400){
+        return 0;
+      }else if((_levelval > 400) && (_levelval <= 450)){
+        return 1;
+      }else if(_levelval > 450){
+        return 2;
+      }
+    default:
+      return 0;
   }
 }

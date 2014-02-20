@@ -13,6 +13,7 @@ Serial myPort;  // Instance of serial class
 int s;
 int m;
 int h;
+int period;
 float hum;
 float temp;
 String t;
@@ -47,7 +48,7 @@ void setup() {
     serial[i] = 0;
     state[i] = "Stop";
     onoff[i] = "default";
-    img[i] = imgA;
+    img[i] = imgB;
   }
 }
 
@@ -62,11 +63,20 @@ void draw() {
       onoff[i] = onoffTime(i, h, m);
       out[i] = getOut(i);
       myPort.write(out[i]);
-      getPicture(i, state[i]);
+      img[i] = getPicture(i, state[i]);
     }
   }
   display();
+  if(period == 20){
+    timeReset();
+  }
   delay(1000);
+}
+
+void timeReset(){
+  int i;
+  period = 0;
+  workingtime[3] = 0;
 }
 
 void getTime() {
@@ -113,13 +123,13 @@ int getOut(int _i) {
   int _out;
   switch(_i){
     case 1:
-      _out = outLevel(inByte[_i], level[_i], state[_i], onoff[_i]);
+      _out = outLevel(_i, inByte[_i], level[_i], state[_i], onoff[_i], workingtime[_i]);
       break;
     case 2:
-      _out = outHum(inByte[_i], hum, state[_i], onoff[_i]);
+      _out = outHum(_i, inByte[_i], hum, state[_i], onoff[_i]);
       break;
     case 3:
-      _out = outLevel2(inByte[_i], level[_i], state[_i], onoff[_i]);
+      _out = outLevel2(_i, inByte[_i], level[_i], state[_i], onoff[_i], workingtime[_i]);
       break;
     default:
       println("Error in getout");
@@ -129,8 +139,11 @@ int getOut(int _i) {
   return _out;
 }
 
-int outLevel(int _inByte, int _level, String _state, String _onoff) {
-  if ((_state == "Running") && (_level == 0) && (_onoff == "OnTime")) {
+int outLevel(int _i, int _inByte, int _level, String _state, String _onoff, int _workingtime) {
+  boolean _TFlevel = judgeLevel(_level);
+  boolean _TFstate = judgeState(_state);
+  boolean _TFonoff = judgeOnoff(_onoff);
+  if(_TFlevel && _TFstate && _TFonoff){
     return 3;
   }
   else if (_inByte == 0) {
@@ -141,30 +154,94 @@ int outLevel(int _inByte, int _level, String _state, String _onoff) {
   }
 }
 
-int outLevel2(int _inByte, int _level, String _state, String _onoff) {
-  int _outLevel;
-  if ((_state == "Running") && (_level == 0) && (_onoff == "OnTime") && (workingtime[3] < 120)) {  // when water level decreased and comes to 5 cm
-    workingtime[3]++;
-    _outLevel = 3;
-  }else if ((_state == "Running") && (_level == 1) && (_onoff == "OnTime") && (workingtime[3] < 120) && (workingtime[3] > 0)) {  // when water level is 5 - 10 cm, and later level increase
-    workingtime[3]++;
-    _outLevel = 2;
-  } else if (_inByte == 0) {  // initial
-    workingtime[3] = 0;
-    _outLevel = 1;
-  } else if (workingtime[3] >= 120){  // 4 means alert
-    _outLevel = 4;
-  }else if (_inByte == 4){  // keep alert
-    _outLevel = 4;
-  } else {  // when water level is up 10 cm, and later level decrease
-    workingtime[3] = 0;
-    _outLevel = 1;
+int outLevel2(int _i, int _inByte, int _level, String _state, String _onoff, int _workingtime) {
+  int _outlevel;
+  boolean _TFlevel = judgeLevel(_level);
+  boolean _TFstate = judgeState(_state);
+  boolean _TFonoff = judgeOnoff(_onoff);
+  boolean _TFworkingtime = judgeWorkingtime(_workingtime);
+  switch(_inByte){
+    case 0:  // initial
+      workingtime[_i] = 0;
+      _outlevel = 1;
+      break;
+    case 1:  // period will not increase
+      if (_TFlevel && _TFstate && _TFonoff && _TFworkingtime) { 
+        period++;
+        workingtime[_i]++;
+        _outlevel = 3;
+      }else if(!_TFstate){
+        _outlevel = 1;
+      }else{
+        _outlevel = 2;
+      }
+      break;
+    case 2:
+      if (_TFlevel && _TFstate && _TFonoff && _TFworkingtime) { 
+        workingtime[_i]++;
+        _outlevel = 3;
+      }else if(!_TFstate){
+        _outlevel = 1;
+      }else{
+        _outlevel = 2;
+      }
+      period++;
+      break;
+    case 3:
+      if(!_TFworkingtime){
+        _outlevel = 4;
+      }else if(_TFlevel && _TFstate && _TFonoff) {
+        period++;
+        workingtime[_i]++;
+        _outlevel = 3;
+      }else{
+        period++;
+        _outlevel = 2;
+      }
+      break;  
+    case 4:  // keep stop state
+      _outlevel = 4;
+      break;
+    default:
+      _outlevel = 4;
   }
-  println(workingtime[3]);
-  return _outLevel;
+  println("WT: " + workingtime[_i] + ", period: " + period);
+  return _outlevel;
 }
 
-int outHum(int _inByte, float _hum, String _state, String _onoff) {
+boolean judgeLevel(int _level){
+  if(_level == 0){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+boolean judgeState(String _state){
+  if(_state == "Running"){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+boolean judgeOnoff(String _onoff){
+  if(_onoff == "OnTime"){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+boolean judgeWorkingtime(int _workingtime){
+  if(_workingtime < 10){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+int outHum(int _i, int _inByte, float _hum, String _state, String _onoff) {
   if ((_state == "Running") && (_hum < 90) && (_onoff == "OnTime")) {
     return 3;
   }
@@ -176,11 +253,12 @@ int outHum(int _inByte, float _hum, String _state, String _onoff) {
   }
 }
 
-void getPicture(int _i, String _state) {
-  if(_state == "Stop"){
-    img[_i] = imgA;
+PImage getPicture(int _i, String _state) {
+  boolean _TFstate = judgeState(_state);
+  if(_TFstate){
+    return imgA;
   }else{
-    img[_i] = imgB;
+    return imgB;
   }
 }
 

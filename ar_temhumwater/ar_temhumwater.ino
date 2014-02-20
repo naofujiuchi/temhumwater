@@ -53,8 +53,10 @@ void loop(){
     levelval[i] = getLevelval(i);
     level[i] = getLevel(i, levelval[i]);
   }
-//  Serial.println(level[3]);
-//  delay(1000);
+/*
+  Serial.println(levelval[3]);
+  delay(1000);
+*/
   if(Serial.available() == 3){
     for(int i = 1; i <= 3; i++){
       inByte[i] = getinByte();
@@ -87,7 +89,7 @@ int getHighlow(int _inByte){
     case 1:
       return LOW;
     case 2:
-      return HIGH;
+      return LOW;
     case 3:
       return HIGH;
     case 4:
@@ -104,7 +106,8 @@ int getLevelval(int _i){
       _levelval = analogRead(LEVELPIN1);
       break;
     case 3:
-      _levelval = determineLevel();
+//      _levelval = determineLevel();
+      _levelval = analogRead(LEVELPIN2);
       break;
     default:
       _levelval = 0;
@@ -113,6 +116,7 @@ int getLevelval(int _i){
   return _levelval;
 }
 
+/*
 int determineLevel(){
   int _levelvalA4;
   int _levelvalA5;
@@ -129,6 +133,7 @@ int determineLevel(){
     return 0;
   }
 }
+*/
 
 /*
 void checkDHT(float _tem, float _hum){
@@ -141,13 +146,16 @@ void checkDHT(float _tem, float _hum){
 int getLevel(int _i, int _levelval){
   switch(_i){
     case 1:
+    case 3:
       if(_levelval > 500){
         return 1;
       }else{
         return 0;
       }
+/*
     case 3:  // fluid level sensor (eTape, MILONE Technologies); if level is 5 cm then output 400, and level is 10 cm then output 450 when connected input voltage 5 V and 1 kΩ resistance
       return _levelval;
+*/
 /*
       if(_levelval <= 400){
         return 0;

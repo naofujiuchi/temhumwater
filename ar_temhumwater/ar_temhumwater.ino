@@ -54,6 +54,9 @@ void loop(){
     level[i] = getLevel(i, levelval[i]);
   }
 /*
+  Serial.print("1: ");
+  Serial.print(levelval[1]);
+  Serial.print(", 3: ");
   Serial.println(levelval[3]);
   delay(1000);
 */
@@ -75,6 +78,7 @@ void loop(){
     Serial.write(hum);
     Serial.write(tem);
   }
+
 }
 
 int getinByte(){

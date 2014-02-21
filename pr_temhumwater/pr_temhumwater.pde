@@ -177,9 +177,13 @@ int outLevel2(int _i, int _inByte, int _level, String _state, String _onoff, int
       }
       break;
     case 2:
-      if (_TFlevel && _TFstate && _TFonoff && _TFworkingtime) { 
-        workingtime[_i]++;
-        _outlevel = 3;
+      if (_TFlevel && _TFstate && _TFonoff && _TFworkingtime) {
+        if(period == 0){
+          workingtime[_i]++;
+          _outlevel = 3;
+        }else{
+          _outlevel = 2;
+        }
       }else if(!_TFstate){
         _outlevel = 1;
       }else{
@@ -200,7 +204,12 @@ int outLevel2(int _i, int _inByte, int _level, String _state, String _onoff, int
       }
       break;  
     case 4:  // keep stop state
-      _outlevel = 4;
+      if(!_TFstate){
+        timeReset();
+        _outlevel = 1;
+      }else{
+        _outlevel = 4;
+      }
       break;
     default:
       _outlevel = 4;

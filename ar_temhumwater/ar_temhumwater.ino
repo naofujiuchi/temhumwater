@@ -39,6 +39,9 @@ void setup() {
     inByte[i] = 0;
     highlow[i] = 0;
   }
+  
+  pinMode(10, OUTPUT);  // for moisture sensor connection
+  
   dht.begin();
 }
 
@@ -68,6 +71,9 @@ void loop(){
       highlow[i] = getHighlow(inByte[i]);
       digitalWrite(outPin[i], highlow[i]);
     }
+    
+    digitalWrite(10, highlow[3]);  // for moisture sensor connection
+    
     Serial.flush();
     // Serial write
     Serial.write(inByte[1]);
@@ -151,7 +157,7 @@ int getLevel(int _i, int _levelval){
   switch(_i){
     case 1:
     case 3:
-      if(_levelval > 500){
+      if(_levelval > 100){
         return 1;
       }else{
         return 0;

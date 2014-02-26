@@ -151,7 +151,7 @@ int getLevel(int _i, int _levelval){
   switch(_i){
     case 1:
     case 3:
-      if(_levelval > 500){
+      if(_levelval > 100){
         return 1;
       }else{
         return 0;
